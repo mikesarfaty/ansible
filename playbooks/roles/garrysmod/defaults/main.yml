@@ -1,3 +1,11 @@
 steamcmd_tarball:
   url: "http://media.steampowered.com/client/steamcmd_linux.tar.gz"
   dest_filename:  steamcmd_linux.tar.gz
+
+ansible_status_dir: .ansible_statuses
+
+gmod_addons:
+  - name: ulib
+    url: "https://ulyssesmod.net/archive/ULib/ulib-v2_63.zip"
+  - name: ulx
+    url: "https://ulyssesmod.net/archive/ulx/ulx-v3_73.zip"

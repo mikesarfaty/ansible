@@ -21,6 +21,8 @@
     - "gmodds"
     - "Steam"
     - "content/css"
+    - "{{ ansible_status_dir }}"
+    - downloads
 
 - name: steamcmd tarball downloaded
   become: true
@@ -48,23 +50,82 @@
     create: yes
   register: arch_i386
 
-- name: add steamcmd dependencies
+- name: apt cache is updated with new arch type
   become: true
   apt:
-    update_cache: "{{ arch_i386.changed }}"
-    name: "lib32gcc-s1"
-    state: present
+    update_cache: true
+  when: arch_i386.changed
 
+- name: steamserver dependencies are installed
+  become: true
+  apt: 
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "lib32gcc-s1"
+    - "lib32stdc++6"
+    - "libncurses5"
+    - "libncurses5:i386"
+    - "unzip"
+
+# We're using a hacky way of checking if these commands have been run, since they only need to be run once.
+# This is idempotent maybe, but I don't want to figure it out for testing purposes.
 - name: steamcmd is installed
   become: true
-  become_user: "{{ gmod_user.name }}"
   shell:  
     chdir: "{{ gmod_user.home }}/Steam"
-    cmd: "./steamcmd.sh +login anonymous +quit && touch created.ansible.txt"
-    creates: "{{ gmod_user.home }}/Steam/created.ansible.txt"
+    cmd: "./steamcmd.sh +login anonymous +quit && touch {{ gmod_user.home }}/{{ ansible_status_dir }}/steamcmd_installed"
+    creates: "{{ gmod_user.home }}/{{ ansible_status_dir }}/steamcmd_installed"
+  notify:
+    - "fs:gmod_home:chown"
 
+- name: dedicated server is installed
+  become: true
+  shell:  
+    chdir: "{{ gmod_user.home }}/Steam"
+    cmd: |
+      ./steamcmd.sh +login anonymous +force_install_dir {{ gmod_user.home }}/gmodds +app_update 4020 validate +quit && \
+         touch {{ gmod_user.home }}/{{ ansible_status_dir }}/dedicated_server_installed
+    creates: "{{ gmod_user.home }}/{{ ansible_status_dir }}/dedicated_server_installed"
+  notify:
+    - "fs:gmod_home:chown"
 
+- name: gmod addons downloaded
+  become: true
+  get_url: 
+    url: "{{ item.url }}"
+    dest: "{{ gmod_user.home }}/downloads/{{ item.name }}"
+    owner: "{{ gmod_user.name }}"
+    group: "{{ gmod_user.name }}"
+  loop: "{{ gmod_addons }}"
+  register: gmod_addons
 
+- name: gmod addons have dest folders
+  become: true
+  file:
+    path: "{{ gmod_user.home }}/gmodds/garrysmod/addons/{{ item | basename }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ gmod_user.name }}"
+    group: "{{ gmod_user.name }}"
+  loop: "{{ gmod_addons.results | map(attribute='dest') }}"
+  register: gmod_addons_dest_folders
+  notify:
+    - "fs:gmod_home:chown"
+  
+
+- name: gmod addons extracted
+  become: true
+  unarchive:
+    remote_src: yes
+    src: "{{ item }}"
+    dest: "{{ gmod_user.home }}/gmodds/garrysmod/addons/{{ item | basename }}"
+    owner: "{{ gmod_user.name }}"
+    group: "{{ gmod_user.name }}"
+  loop: "{{ gmod_addons.results | map(attribute='dest') }}"
+  when: gmod_addons_dest_folders.changed
+  notify:
+    - "fs:gmod_home:chown"
 
 
 # - name: steamcmd exists

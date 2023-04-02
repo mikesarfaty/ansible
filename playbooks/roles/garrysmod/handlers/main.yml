@@ -1,0 +1,14 @@
+- name: steamcmd installation owned by gmod user
+  become: true
+  file:
+    path: "{{ gmod_user.home }}/{{ item }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ gmod_user.name }}"
+    group: "{{ gmod_user.name }}"
+    recurse: true
+  loop:
+    - "gmodds"
+    - "Steam"
+    - "content"
+  listen: "fs:gmod_home:chown"
