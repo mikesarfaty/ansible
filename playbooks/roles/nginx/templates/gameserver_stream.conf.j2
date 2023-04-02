@@ -1,0 +1,10 @@
+stream {
+    upstream {{ item.name }} {
+        server localhost:{{ item.internal_port }};
+    }
+
+    server {
+        listen {{ item.internet_port }};
+        proxy_pass {{ item.name }};
+    }
+}

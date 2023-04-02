@@ -1,0 +1,79 @@
+- name: gmod user exists
+  become: true
+  user:
+    name: gmod
+    shell: /bin/bash
+    groups:
+      - "wheel"
+    append: yes
+  register: gmod_user
+
+- name: gmod dependent directories exist
+  become: true
+  file:
+    path: "{{ gmod_user.home }}/{{ item }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ gmod_user.name }}"
+    group: "{{ gmod_user.name }}"
+  loop:
+    - "content"
+    - "gmodds"
+    - "Steam"
+    - "content/css"
+
+- name: steamcmd tarball downloaded
+  become: true
+  get_url: 
+    url: "{{ steamcmd_tarball.url }}"
+    dest: "{{ gmod_user.home }}/Steam/{{ steamcmd_tarball.dest_filename }}"
+    owner: "{{ gmod_user.name }}"
+    group: "{{ gmod_user.name }}"
+  register: steamcmd_downloaded_tar
+
+- name: steamcmd tarball unarchived
+  become: true
+  unarchive:
+    remote_src: yes
+    src: "{{ steamcmd_downloaded_tar.dest }}"
+    dest: "{{ steamcmd_downloaded_tar.dest | dirname }}"
+    owner: "{{ gmod_user.name }}"
+    group: "{{ gmod_user.name }}"
+
+- name: add correct allowed architecture to dpkg so we can download steamcmd pre-reqs
+  become: true
+  lineinfile:
+    dest: /var/lib/dpkg/arch
+    line: i386
+    create: yes
+  register: arch_i386
+
+- name: add steamcmd dependencies
+  become: true
+  apt:
+    update_cache: "{{ arch_i386.changed }}"
+    name: "lib32gcc-s1"
+    state: present
+
+- name: steamcmd is installed
+  become: true
+  become_user: "{{ gmod_user.name }}"
+  shell:  
+    chdir: "{{ gmod_user.home }}/Steam"
+    cmd: "./steamcmd.sh +login anonymous +quit && touch created.ansible.txt"
+    creates: "{{ gmod_user.home }}/Steam/created.ansible.txt"
+
+
+
+
+
+# - name: steamcmd exists
+#   become: true
+#   shell: |
+#     wget http://media.steampowered.com/client/steamcmd_linux.tar.gz
+#     tar -xvzf steamcmd_linux.tar.gz
+#     ./steamcmd.sh +login anonymous +quit
+#   args:
+#     chdir: "{{ gmod_user.home }}/Steam"
+#   register: steamcmd_exists
+

@@ -1,0 +1,71 @@
+---
+- name: packages are updated
+  become: true
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: nginx pre-requisites are installed
+  become: true
+  apt:
+    pkg:
+      - curl
+      - gnupg2
+      - ca-certificates
+      - lsb-release
+      - ubuntu-keyring
+
+- name: nginx.org package signing key
+  become: true
+  apt_key: 
+    url: http://nginx.org/keys/nginx_signing.key
+    state: present
+
+- name: nginx stable repository (deb)
+  become: true
+  apt_repository:
+    repo: 'deb http://nginx.org/packages/{{ ansible_distribution|lower }}/ {{ ansible_distribution_release|lower }} nginx'
+    state: present
+
+- name: nginx stable repository (deb-src)
+  become: true
+  apt_repository:
+    repo: 'deb-src http://nginx.org/packages/{{ ansible_distribution|lower }}/ {{ ansible_distribution_release|lower }} nginx'
+    state: present
+
+- name: nginx installed with specific version
+  become: true
+  apt:
+    name: nginx={{ nginx_version }}*
+    update_cache: yes
+    state: present
+
+- name: nginx conf.d/streams directory exists
+  become: true
+  file:
+    path: '/etc/nginx/conf.d/streams'
+    state: directory
+    mode: "0755"
+  when: nginx_gameservers != None
+
+- name: nginx default conf overwritten to include streams where needed
+  become: true
+  template:
+    src: files/nginx_default.conf
+    dest: '/etc/nginx/nginx.conf'
+    owner: root
+    group: root
+    mode: "0644"
+  when: nginx_gameservers != None
+  notify: "handler:nginx:reload"
+
+- name: nginx stream configs are present for gameservers
+  become: true
+  template:
+    src: "gameserver_stream.conf.j2"
+    dest: "/etc/nginx/conf.d/streams/{{ item.name }}.conf"
+    backup: true
+    mode: "0644"
+  loop: "{{ nginx_gameservers }}"
+  when: nginx_gameservers != None
+  notify: "handler:nginx:reload"

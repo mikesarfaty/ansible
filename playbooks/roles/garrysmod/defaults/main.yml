@@ -1,0 +1,3 @@
+steamcmd_tarball:
+  url: "http://media.steampowered.com/client/steamcmd_linux.tar.gz"
+  dest_filename:  steamcmd_linux.tar.gz

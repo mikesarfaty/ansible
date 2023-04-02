@@ -1,0 +1,17 @@
+---
+- hosts: all
+  vars:
+      nginx_gameservers:
+        - name: garrysmod
+          internet_port: 6065
+          internal_port: 6060
+      python_packages:
+        - name: boto3
+          version: "1.26.104"
+        - name: botocore
+          version: "1.29.104"
+        - name: awscli
+          version: "1.27.104"
+
+  roles:
+    - garrysmod
