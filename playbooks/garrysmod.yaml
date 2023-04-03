@@ -12,6 +12,9 @@
           version: "1.29.104"
         - name: awscli
           version: "1.27.104"
-
+      filesystems:
+        - device: /dev/nvme1n1
+          fstype: ext4
+          mount_path: /data
   roles:
     - garrysmod

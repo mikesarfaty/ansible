@@ -1,5 +1,6 @@
-# ---
-# dependencies:
-#   - role: nginx
-#   - role: python
-#   - role: system
+---
+dependencies:
+  - role: nginx
+  - role: python
+  - role: system
+  - role: ebs
