@@ -12,3 +12,11 @@
     - "Steam"
     - "content"
   listen: "fs:gmod_home:chown"
+
+
+- name: start gmod server
+  become: true
+  service:
+    name: gmod
+    state: restarted
+  listen: "service:gmod:restart"

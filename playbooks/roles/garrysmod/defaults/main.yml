@@ -9,3 +9,11 @@ gmod_addons:
     url: "https://ulyssesmod.net/archive/ULib/ulib-v2_63.zip"
   - name: ulx
     url: "https://ulyssesmod.net/archive/ulx/ulx-v3_73.zip"
+
+cfg_admins:
+  - name: "mike"
+    steam_id: "STEAM_0:0:38712735"
+  - name: "dono"
+    steam_id: "STEAM_0:1:71128055"
+
+gmod_workshop_collection: "2956779101"

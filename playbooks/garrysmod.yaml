@@ -3,8 +3,8 @@
   vars:
       nginx_gameservers:
         - name: garrysmod
-          internet_port: 6065
-          internal_port: 6060
+          internet_port: 99
+          internal_port: 98
       python_packages:
         - name: boto3
           version: "1.26.104"

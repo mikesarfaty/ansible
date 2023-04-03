@@ -1,6 +1,7 @@
 - name: gmod user exists
   become: true
   user:
+    home: /data/gmod
     name: gmod
     shell: /bin/bash
     groups:
@@ -74,8 +75,8 @@
   become: true
   shell:  
     chdir: "{{ gmod_user.home }}/Steam"
-    cmd: "./steamcmd.sh +login anonymous +quit && touch {{ gmod_user.home }}/{{ ansible_status_dir }}/steamcmd_installed"
-    creates: "{{ gmod_user.home }}/{{ ansible_status_dir }}/steamcmd_installed"
+    cmd: "./steamcmd.sh +login anonymous +quit"
+    creates: "{{ gmod_user.home }}/Steam/config"
   notify:
     - "fs:gmod_home:chown"
 
@@ -84,9 +85,8 @@
   shell:  
     chdir: "{{ gmod_user.home }}/Steam"
     cmd: |
-      ./steamcmd.sh +login anonymous +force_install_dir {{ gmod_user.home }}/gmodds +app_update 4020 validate +quit && \
-         touch {{ gmod_user.home }}/{{ ansible_status_dir }}/dedicated_server_installed
-    creates: "{{ gmod_user.home }}/{{ ansible_status_dir }}/dedicated_server_installed"
+      ./steamcmd.sh +force_install_dir {{ gmod_user.home }}/gmodds +login anonymous  +app_update 4020 validate +quit
+    creates: "{{ gmod_user.home }}/gmodds/garrysmod"
   notify:
     - "fs:gmod_home:chown"
 
@@ -128,13 +128,50 @@
     - "fs:gmod_home:chown"
 
 
-# - name: steamcmd exists
-#   become: true
-#   shell: |
-#     wget http://media.steampowered.com/client/steamcmd_linux.tar.gz
-#     tar -xvzf steamcmd_linux.tar.gz
-#     ./steamcmd.sh +login anonymous +quit
-#   args:
-#     chdir: "{{ gmod_user.home }}/Steam"
-#   register: steamcmd_exists
+- name: "settings: user roles are in place"
+  become: true
+  template:
+    src: "users.txt.j2"
+    dest: "{{ gmod_user.home }}/gmodds/garrysmod/settings/users.txt"
+    owner: "{{ gmod_user.name }}"
+    group: "{{ gmod_user.name }}"
+  notify:
+    - "fs:gmod_home:chown"
 
+- name: gmod service file in place
+  become: true
+  template:
+    src: "gmod.service.j2"
+    dest: "/lib/systemd/system/gmod.service"
+  notify:
+    - "service:gmod:restart"
+
+- name: gmod server cfg in place
+  become: true
+  template:
+    src: server.cfg.j2
+    dest: "{{ gmod_user.home }}/gmodds/garrysmod/cfg/server.cfg"
+    owner: "{{ gmod_user.name }}"
+    group: "{{ gmod_user.name }}"
+  notify:
+    - "service:gmod:restart"
+
+- name: cstrike data downloaded from steamcmd
+  become: true
+  shell:
+    chdir: "{{ gmod_user.home }}/Steam"
+    cmd: |
+      ./steamcmd.sh +force_install_dir "{{ gmod_user.home }}/content/css" +login anonymous +app_update 232330 validate +quit
+    creates: "{{ gmod_user.home }}/content/css/cstrike"
+  notify:
+    - "fs:gmod_home:chown"
+
+- name: cstrike data mounted to server properly
+  become: true
+  template:
+    src: mount.cfg.j2
+    dest: "{{ gmod_user.home }}/gmodds/garrysmod/cfg/mount.cfg"
+    owner: "{{ gmod_user.name }}"
+    group: "{{ gmod_user.name }}"
+  notify:
+    - "service:gmod:restart"

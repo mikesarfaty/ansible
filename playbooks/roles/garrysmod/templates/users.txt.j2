@@ -1,0 +1,14 @@
+"Users"
+{
+        "superadmin"
+        {
+                {% for user in cfg_admins -%}
+                "{{ user.name }}"             "{{ user.steam_id }}"
+                {% endfor %}
+        }
+
+        "admin"
+        {
+        }
+
+}
