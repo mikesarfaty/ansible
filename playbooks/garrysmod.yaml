@@ -1,0 +1,20 @@
+---
+- hosts: all
+  vars:
+      nginx_gameservers:
+        - name: garrysmod
+          internet_port: 99
+          internal_port: 98
+      python_packages:
+        - name: boto3
+          version: "1.26.104"
+        - name: botocore
+          version: "1.29.104"
+        - name: awscli
+          version: "1.27.104"
+      filesystems:
+        - device: /dev/nvme1n1
+          fstype: ext4
+          mount_path: /data
+  roles:
+    - garrysmod

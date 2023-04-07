@@ -1,0 +1,6 @@
+- name: start/reload NGINX
+  become: true
+  service:
+    name: nginx
+    state: reloaded
+  listen: "handler:nginx:reload"

@@ -1,0 +1,23 @@
+- name: filesystems created
+  become: true
+  filesystem:
+    fstype: "{{ item.fstype }}"
+    dev: "{{ item.device }}"
+  loop: "{{ filesystems }}"
+
+- name: mount directories exist
+  become: true
+  file:
+    path: "{{ item.mount_path }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ filesystems }}"
+
+- name: filesystems mounted
+  become: true
+  mount:
+    src: "{{ item.device }}"
+    path: "{{ item.mount_path }}"
+    fstype: "{{ item.fstype }}"
+    state: mounted
+  loop: "{{ filesystems }}"

@@ -1,0 +1,9 @@
+---
+# example:
+
+# filesystems:
+#   - device: /dev/nvme1n1
+#     mount_path: /data
+#     fstype: ext4
+
+filesystems:
